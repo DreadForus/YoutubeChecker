@@ -1,0 +1,3 @@
+services:
+    curl_service:
+        class: YouTubeCheckerBundle\Service\CurlService

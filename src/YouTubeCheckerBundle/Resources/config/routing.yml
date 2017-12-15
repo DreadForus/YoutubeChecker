@@ -1,0 +1,7 @@
+youtube_checker_index:
+    path:     /
+    defaults: { _controller: YouTubeCheckerBundle:Main:index }
+
+youtube_checker_result:
+    path:     /result
+    defaults: { _controller: YouTubeCheckerBundle:Main:result }
