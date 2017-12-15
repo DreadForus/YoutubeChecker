@@ -39,10 +39,19 @@
                             <div class="hr-line-dashed"></div>
                             {% if items|length > 0 %}
                                 {% for item in items %}
-                                    <div class="search-result">
-                                        <h3><a href="#">{{ item.snippet.title }}</a></h3>
-                                        <a href="https://www.youtube.com/user/{{ item.snippet.title }}" target="_blank" class="search-link">https://www.youtube.com/user/{{ item.snippet.title }}</a>
-                                        <p>{{ item.snippet.description }} </p>
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                                <div class="search-result">
+                                                    <h3><a href="#">{{ item.snippet.title }}</a></h3>
+                                                    <a href="https://www.youtube.com/user/{{ item.snippet.title }}" target="_blank" class="search-link">https://www.youtube.com/user/{{ item.snippet.title }}</a>
+                                                    <p>{{ item.snippet.description }} </p>
+                                                </div>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <div style="float: none;margin: 0 auto;">
+                                                <img src="{{ item.snippet.thumbnails.default.url }}">
+                                            </div>
+                                        </div>
                                     </div>
                                 {% endfor %}
                             {% else %}

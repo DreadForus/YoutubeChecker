@@ -3,6 +3,7 @@
 namespace YouTubeCheckerBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Exception;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Form;
@@ -46,7 +47,18 @@ class MainController extends Controller
     }
 
     private function getResult(string $query){
-        $curlResult =  $this->channel($query);
+
+        $cachedItem = $this->get('cache.app')->getItem($query);
+
+        if (!$cachedItem->isHit()) {
+            $curlResult =  $this->channel($query);
+
+
+            $cachedItem->set($curlResult);
+            $this->get('cache.app')->save($cachedItem);
+        } else {
+            $curlResult = $cachedItem->get();
+        }
 
 //        dump($curlResult);
 //        dump($curlResult->items);
@@ -87,10 +99,14 @@ class MainController extends Controller
 
         $curlService = $this->get("curl_service");
 
-        return $curlService->load(
-            $url,
-            $data,
-            "GET"
-        );
+        try{
+            return $curlService->load(
+                $url,
+                $data,
+                "GET"
+            );
+        }catch (Exception $exception){
+            var_dump($exception->getMessage());die;
+        }
     }
 }

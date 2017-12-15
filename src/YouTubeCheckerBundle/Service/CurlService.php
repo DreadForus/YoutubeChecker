@@ -9,37 +9,37 @@ use YouTubeCheckerBundle\Exception\ResponseCurlServiceException;
 class CurlService
 {
     /**
-     * Create curl request and return resource $ch
      * @param string $path
-     * @param array  $data
+     * @param array $data
      * @param string $method
      * @param string $dataType
-     * @param int    $timeout
+     * @param int $timeout
      *
      * @return resource $ch
      * @throws RequestCurlServiceException
      */
     private function createRequest(
         string $path,
-        array  $data     = [],
-        string $method   = 'POST',
+        array $data = [],
+        string $method = 'POST',
         string $dataType = 'JSON',
-        int    $timeout  =  300
-    ) {
+        int $timeout = 300
+    )
+    {
 
         if (!filter_var($path, FILTER_VALIDATE_URL) === false) {
             $ch = curl_init($path);
         } else {
-            throw new RequestCurlServiceException('Path "'.$path.'" is not a valid URL', 1006);
+            throw new RequestCurlServiceException('Path "' . $path . '" is not a valid URL', 1006);
         }
 
         if (trim(strtolower($method)) == 'post') {
 
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 
-            if(trim(strtolower($dataType)) == 'json') {
+            if (trim(strtolower($dataType)) == 'json') {
 
-                if($data_string = json_encode($data)){
+                if ($data_string = json_encode($data)) {
                     curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
                     curl_setopt($ch, CURLOPT_HTTPHEADER,
                         [
@@ -52,7 +52,7 @@ class CurlService
                 }
 
             } else {
-                throw new RequestCurlServiceException('Content-Type "'.$method.'" not allowed for POST method', 1004);
+                throw new RequestCurlServiceException('Content-Type "' . $method . '" not allowed for POST method', 1004);
             }
 
         } elseif (trim(strtolower($method)) == 'get') {
@@ -69,7 +69,7 @@ class CurlService
                     $path .= $key;
 
                     if (($value) and (trim($value) != '')) {
-                        $path .='='.$value;
+                        $path .= '=' . $value;
                     }
                 }
 
@@ -78,14 +78,14 @@ class CurlService
 
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
 
-            if(trim(strtolower($dataType)) == 'json') {
+            if (trim(strtolower($dataType)) == 'json') {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             } else {
-                throw new RequestCurlServiceException('Content-Type "'.$method.'" not allowed for GET method', 1004);
+                throw new RequestCurlServiceException('Content-Type "' . $method . '" not allowed for GET method', 1004);
             }
 
         } else {
-            throw new RequestCurlServiceException('Method "'.$method.'" not allowed', 1003);
+            throw new RequestCurlServiceException('Method "' . $method . '" not allowed', 1003);
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -96,70 +96,60 @@ class CurlService
     }
 
     /**
-     * Process single curl request and return response
      * @param string $path
-     * @param array  $data
+     * @param array $data
      * @param string $method
      * @param string $dataType
-     * @param int    $timeout
+     * @param int $timeout
      *
      * @return object $result
      * @throws CurlServiceException
      */
-    public function load (
+    public function load(
         string $path,
-        array  $data     = [],
-        string $method   = 'POST',
+        array $data = [],
+        string $method = 'POST',
         string $dataType = 'JSON',
-        int    $timeout  =  300
-    ) {
-
-//        dump([$path,$data,$method,$dataType,$timeout]);
-//        die;
+        int $timeout = 300
+    )
+    {
         try {
 
             $ch = $this->createRequest($path, $data, $method, $dataType, $timeout);
 
-//            dump($ch);die;
             $result = curl_exec($ch);
-
-
+//            dump($result);die;
             if (curl_errno($ch)) {
-                throw new ResponseCurlServiceException(curl_error($ch), intval('11'.curl_errno($ch)));
+                throw new ResponseCurlServiceException(curl_error($ch), intval('11' . curl_errno($ch)));
             } else {
 
-                if((curl_getinfo($ch, CURLINFO_HTTP_CODE) >= 200)
-                and(curl_getinfo($ch, CURLINFO_HTTP_CODE) < 300))
-                {
-                    if($responseObj = json_decode($result)){
+                if ((curl_getinfo($ch, CURLINFO_HTTP_CODE) >= 200)
+                    and (curl_getinfo($ch, CURLINFO_HTTP_CODE) < 300)) {
+                    if ($responseObj = json_decode($result)) {
                         return $responseObj;
                     } else {
                         throw new ResponseCurlServiceException('Failed json_encode response', 1007);
                     }
                 } else {
-                    throw new ResponseCurlServiceException('Unexpected response http code: '.curl_getinfo($ch, CURLINFO_HTTP_CODE).' ('.json_encode([$path, $data]).')', intval('12'.curl_getinfo($ch, CURLINFO_HTTP_CODE)));
+                    throw new ResponseCurlServiceException('Unexpected response http code: ' . curl_getinfo($ch, CURLINFO_HTTP_CODE) . ' (' . json_encode([$path, $data]) . ')', intval('12' . curl_getinfo($ch, CURLINFO_HTTP_CODE)));
                 }
             }
-
-
-        } catch(RequestCurlServiceException $e) {
-            throw new CurlServiceException('Request creation failed', 1001, $e, func_get_args());
-        } catch(ResponseCurlServiceException $e) {
-            throw new CurlServiceException('Getting response failed', 1002, $e, func_get_args());
-        } catch(\Exception $e) {
-            throw new CurlServiceException($e->getMessage(), 1000, $e, func_get_args());
+        } catch (RequestCurlServiceException $e) {
+            throw new CurlServiceException('Request creation failed', 1001, $e);
+        } catch (ResponseCurlServiceException $e) {
+            throw new CurlServiceException('Getting response failed', 1002, $e);
+        } catch (\Exception $e) {
+            throw new CurlServiceException($e->getMessage(), 1000, $e);
         }
     }
-
 
     public function loadMulti(array $resources)
     {
         try {
             $response = [];
 
-            // build the multi-curl handle, adding both $ch
-            $mh   = curl_multi_init();
-            $chs  = [];
+            $mh = curl_multi_init();
+            $chs = [];
             $keys = [];
             foreach ($resources as $key => $value) {
                 $keys [] = $key;
@@ -168,7 +158,6 @@ class CurlService
                 curl_multi_add_handle($mh, $chs[$key]);
             }
 
-            // execute all queries simultaneously, and continue when all are complete
             $running = null;
             do {
                 curl_multi_exec($mh, $running);
@@ -187,12 +176,12 @@ class CurlService
             curl_multi_close($mh);
 
             return $response;
-        } catch(RequestCurlServiceException $e) {
-            throw new CurlServiceException('Request creation failed', 1001);
-        } catch(ResponseCurlServiceException $e) {
-            throw new CurlServiceException('Getting response failed', 1002);
-        } catch(\Exception $e) {
-            throw new CurlServiceException($e->getMessage(), 1000, $e, func_get_args());
+        } catch (RequestCurlServiceException $e) {
+            throw new CurlServiceException('Request creation failed', 1001, $e);
+        } catch (ResponseCurlServiceException $e) {
+            throw new CurlServiceException('Getting response failed', 1002, $e);
+        } catch (\Exception $e) {
+            throw new CurlServiceException($e->getMessage(), 1000, $e);
         }
     }
 }
